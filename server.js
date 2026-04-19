@@ -40,22 +40,32 @@ app.post('/api/promo', (req, res) => {
   if (req.headers['x-api-secret'] !== API_SECRET) {
     return res.status(401).json({ error: 'Não autorizado' });
   }
-  const { nomeProduto, precoAntigo, precoNovo, desconto, cupom, linkCompra } = req.body;
+
+  const { nomeProduto, precoAntigo, precoNovo, desconto, cupom, linkCompra, imagemUrl } = req.body;
+
   if (!nomeProduto || !linkCompra) {
     return res.status(400).json({ error: 'nomeProduto e linkCompra são obrigatórios' });
   }
+
   let promos = lerPromos();
   promos = marcarExpiradas(promos);
+
   promos.unshift({
     id: Date.now(),
     timestamp: Date.now(),
-    nomeProduto, precoAntigo, precoNovo, desconto,
+    nomeProduto,
+    precoAntigo: precoAntigo || '',
+    precoNovo: precoNovo || '',
+    desconto: desconto || '',
     cupom: cupom || null,
     linkCompra,
+    imagemUrl: imagemUrl || '',
     expirada: false
   });
+
   if (promos.length > MAX_PROMOS) promos = promos.slice(0, MAX_PROMOS);
   salvarPromos(promos);
+
   console.log(`✅ Nova promo adicionada: ${nomeProduto}`);
   res.json({ ok: true, total: promos.length });
 });
@@ -70,7 +80,6 @@ app.delete('/api/promo/:id', (req, res) => {
   res.json({ ok: true });
 });
 
-// Rota catch-all para o React Router funcionar
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
